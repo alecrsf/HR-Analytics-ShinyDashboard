@@ -1,0 +1,13 @@
+name: HR_Analytics
+title: HR_Analytics
+username:
+account: alecrsf
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5648053
+bundleId: 5589670
+url: https://alecrsf.shinyapps.io/hr_analytics/
+when: 1645104625.53954
+lastSyncTime: 1645104625.53956
+asMultiple: FALSE
+asStatic: FALSE

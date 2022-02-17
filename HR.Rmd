@@ -1,0 +1,116 @@
+---
+title: "HR Analytics"
+author: "Alessio Crisafulli Carpani"
+date: "2/11/2022"
+output: html_document
+---
+
+```{r, include=FALSE, message=FALSE}
+#Setup
+setwd("~/Desktop/Study/Informatics/Projects/Ideas/HR Analytics")
+
+pacman::p_load(tidyverse,reticulate)
+```
+
+```{python, include=FALSE, message=FALSE}
+import pandas as pd
+import matplotlib.pyplot as plt
+```
+
+# HR Analytics
+
+## IBM Employee Attrition & Performance
+
+The aim is to predict attrition of valuable employees and explore important questions such as 'show me a breakdown of distance from home by job role and attrition' or 'compare average monthly income by education and attrition'. This is a fictional data set created by IBM data scientists and it is possible to download it from [Kaggle](https://www.kaggle.com/pavansubhasht/ibm-hr-analytics-attrition-dataset){style="text-decoration: none;"}.
+
+```{r}
+IBM <- readr::read_csv("IBM-HR.csv", 
+											 col_types = cols(
+	Attrition = col_factor(levels = c("Yes", "No"))))
+
+IBM
+```
+
+### Exploratory Data Analysis
+
+```{python, include=FALSE}
+a = r.IBM.describe().round(2)
+for column in r.IBM.columns:
+    print(f"{column}: Number of unique values {r.IBM[column].nunique()}")
+```
+
+For the purposes of this analysis the number of employees, the ID, the number of employees aged over 18 yo and standard hours, are not useful, therefore I am going to drop them.
+
+```{python}
+r.IBM.drop(['EmployeeCount', 'EmployeeNumber', 'Over18', 'StandardHours'], axis="columns", inplace=True)
+```
+
+#### Summary Statistics
+
+Now, we can have a look to some summary statistics of the dataset. This is specially useful to understand the ranges of our ordinal variables:
+
+```{r, message=FALSE}
+reactable::reactable(py$a)
+```
+
+```{python, include=FALSE}
+correlation = r.IBM.corr()
+
+object_col = []
+for column in r.IBM.columns:
+	#Check variables that are categorical (objects in Python)
+    if r.IBM[column].dtype == object and len(r.IBM[column].unique()) <= 30:
+        object_col.append(column)
+        print(f"{column} : {r.IBM[column].unique()}")
+        print(r.IBM[column].value_counts())
+        print("====================================")
+```
+
+#### Correlations
+
+One of the first important tasks when doing exploratory data analysis is to see the correlation between our variables.
+
+```{python}
+import matplotlib.pyplot as plt
+import seaborn as sns
+plt.figure(figsize=(50, 50))
+sns.set(font_scale=3)
+sns.heatmap(r.IBM.corr(), annot=True, 
+            linewidths=1.2,
+            cmap=sns.color_palette("ch:s=.25,rot=-.25",                          as_cmap=True),
+            annot_kws={"size": 25},
+cbar_kws={"orientation": "horizontal"})
+```
+
+From the heatmap above we can asses some remarkable correlations:
+
+-   Monthly income is highly correlated with Job level.
+
+-   Job level is highly correlated with total working hours.
+
+-   Monthly income is highly correlated with total working hours.
+
+-   Age is also positively correlated with the Total working hours.
+
+-   Marital status and stock option level are negatively correlated
+
+> But what are the attrition rate?
+
+```{python, include = FALSE}
+#Number of observations for attrition attitude [YES,NO]
+ratio = pd.DataFrame(
+	((r.IBM.groupby(['Attrition'])['Attrition'].count()/len(r.IBM))).round(2)).T
+```
+
+```{r}
+library(waffle)
+waffle(c('Yes = 16%' = 16, 
+				 'No = 84%' = 84), 
+			 rows = 4, colors = c("orange", "lightgrey"),
+			 size = 1,
+  title = 'Attrition Rate (%)', legend_pos="bottom") + 
+	theme(title = element_text(
+		family = 'Arial',
+		size = 5, face = 'bold'
+	))
+```
